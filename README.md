@@ -7,8 +7,11 @@ Ein modularer Discord-Bot (discord.js v14 + TypeScript + better-sqlite3), der ei
   Typ (Text/Voice/Forum/Announcement), Topic, Slowmode.
 - **Nachrichten-Sync (A ↔ B):** Bidirektional über Webhooks, mit Original-Name/Avatar,
   Attachments, Embeds, Edits & Deletes. Inklusive Loop-Prevention.
-- **Custom Names:** Channels auf B können per UI/Befehl umbenannt und „gelockt“ werden;
-  die Kategorie auf B ist gegen UI-Umbenennung geschützt (nur per Befehl).
+- **Custom Names:** Ein eigener Channel-Name auf B entsteht **nur** per
+  `/sync rename-channel` (dann gelockt). Ohne Eintrag folgt der Channel **immer** dem
+  Namen von Server A — eine UI-Umbenennung auf B wird automatisch wieder auf den
+  A-Namen (bzw. den gesetzten Custom-Namen) zurückgesetzt. Die Kategorie auf B ist
+  ebenso geschützt (nur per `/sync rename-category`).
 
 ## Slash-Commands
 

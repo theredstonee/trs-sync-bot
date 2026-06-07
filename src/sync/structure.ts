@@ -180,8 +180,10 @@ export async function handleSourceChannelUpdate(
 /* --------- B side: detect user rename / category protection --------- */
 
 /**
- * Called for channelUpdate on the TARGET side. Stores user renames as custom names,
- * and resets the synced category if it was renamed outside of the bot command.
+ * Called for channelUpdate on the TARGET side. UI renames are NOT allowed to stick:
+ * channels are reverted to their authoritative name (custom name if set via command,
+ * otherwise Server A's name), and the synced category is likewise protected.
+ * Custom names are created ONLY via /sync rename-channel.
  */
 export async function handleTargetChannelUpdate(
   oldChannel: GuildChannel,
@@ -214,11 +216,32 @@ export async function handleTargetChannelUpdate(
   if (isChannelUpdateSuppressed(newChannel.id)) return true; // bot-caused, ignore
 
   if (oldChannel.name !== newChannel.name) {
-    setCustomName(mapping.sync_id, newChannel.id, newChannel.name);
-    log.info(
-      `[${mapping.sync_id}] Stored custom name "${newChannel.name}" for target channel ${newChannel.id}; ` +
-        `it will no longer be overwritten by source renames.`,
-    );
+    // A custom name is set ONLY via /sync rename-channel. A plain UI rename must not
+    // create a lock — enforce the authoritative name instead:
+    //   - custom name set      -> revert to it (stays locked)
+    //   - no custom name (none) -> revert to Server A's current name
+    const custom = getCustomName(newChannel.id);
+    let enforcedName = custom?.custom_name;
+    if (!enforcedName) {
+      const pair = getSyncPair(mapping.sync_id);
+      const guildA = pair ? newChannel.client.guilds.cache.get(pair.source_guild_id) : undefined;
+      enforcedName = guildA?.channels.cache.get(mapping.source_channel_id)?.name;
+    }
+
+    if (enforcedName && enforcedName !== newChannel.name) {
+      suppressChannelUpdate(newChannel.id);
+      try {
+        await newChannel.edit({
+          name: enforcedName,
+          reason: 'TRS: channel name follows Server A (use /sync rename-channel for a custom name)',
+        });
+        log.info(
+          `[${mapping.sync_id}] Reverted UI rename on target channel ${newChannel.id} to "${enforcedName}".`,
+        );
+      } catch (err) {
+        log.error('Failed to revert channel rename:', err);
+      }
+    }
   }
   return true;
 }
