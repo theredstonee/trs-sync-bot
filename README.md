@@ -129,5 +129,11 @@ src/
   sie nicht fälschlich als Custom Name in die DB geschrieben werden.
 - **Nachrichten-Sync** läuft für **Text- und Announcement-Channels**. Voice/Forum werden
   strukturell gespiegelt, aber (Forum-Threads/Voice) nicht als Nachrichten-Stream.
+- **Reaktionen** werden 1:1 mitgespiegelt (Add/Remove). Technische Eigenheit: Discord erlaubt
+  keine Reaktion „im Namen" eines fremden Users — die gespiegelte Reaktion wird vom **Bot**
+  gesetzt. Sie erscheint also korrekt mit Emoji am Partner-Post, aber als Bot-Reaktion.
+  Eine gespiegelte Reaktion wird erst entfernt, wenn auf der Quellseite **kein** User mehr
+  diese Reaktion hält. Custom-Emojis fremder Server (in denen der Bot nicht ist) können nicht
+  gesetzt werden und werden übersprungen.
 - Cross-Server-Mentions werden beim Spiegeln **nicht** gepingt (`allowedMentions: parse: []`).
 ```

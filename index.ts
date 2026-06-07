@@ -19,16 +19,18 @@ import {
   onChannelUpdate,
 } from './src/events/channels.js';
 import { onGuildCreate } from './src/events/guilds.js';
+import { onReactionAdd, onReactionRemove } from './src/events/reactions.js';
 import { log } from './src/util/logger.js';
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMessageReactions,
     GatewayIntentBits.GuildWebhooks,
     GatewayIntentBits.MessageContent, // privileged — enable in the Developer Portal
   ],
-  partials: [Partials.Message, Partials.Channel],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User],
 });
 
 client.once(Events.ClientReady, (c) => {
@@ -40,6 +42,9 @@ client.on(Events.GuildCreate, (g) => void onGuildCreate(g));
 client.on(Events.MessageCreate, (m) => void onMessageCreate(m));
 client.on(Events.MessageUpdate, (o, n) => void onMessageUpdate(o, n));
 client.on(Events.MessageDelete, (m) => void onMessageDelete(m));
+
+client.on(Events.MessageReactionAdd, (r, u) => void onReactionAdd(r, u));
+client.on(Events.MessageReactionRemove, (r, u) => void onReactionRemove(r, u));
 
 client.on(Events.ChannelCreate, (c) => void onChannelCreate(c));
 client.on(Events.ChannelDelete, (c) => void onChannelDelete(c));
