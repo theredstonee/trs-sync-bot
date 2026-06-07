@@ -138,5 +138,6 @@ src/
   Eine gespiegelte Reaktion wird erst entfernt, wenn auf der Quellseite **kein** User mehr
   diese Reaktion hält. Custom-Emojis fremder Server (in denen der Bot nicht ist) können nicht
   gesetzt werden und werden übersprungen.
-- Cross-Server-Mentions werden beim Spiegeln **nicht** gepingt (`allowedMentions: parse: []`).
+- Erwähnungen werden 1:1 gespiegelt und lösen **echte Pings** aus — inkl. @User, Rollen
+  und @everyone/@here (`allowedMentions: parse: ['users','roles','everyone']`).
 ```

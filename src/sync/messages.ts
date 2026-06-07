@@ -84,7 +84,7 @@ export async function mirrorMessageCreate(message: Message): Promise<void> {
       avatarURL,
       embeds,
       files,
-      allowedMentions: { parse: [] }, // never ping across the mirror
+      allowedMentions: { parse: ['users', 'roles', 'everyone'] }, // mirror real pings 1:1
     });
 
     addMessageMapping({
@@ -130,7 +130,7 @@ async function editViaWebhook(
     await client.editMessage(messageId, {
       content: content || undefined,
       embeds,
-      allowedMentions: { parse: [] },
+      allowedMentions: { parse: ['users', 'roles', 'everyone'] },
     });
   } catch (err) {
     log.error('Failed to mirror message edit:', err);
