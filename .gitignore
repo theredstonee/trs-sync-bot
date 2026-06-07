@@ -1,0 +1,14 @@
+node_modules/
+dist/
+data/
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.local
+npm-debug.log*
+
+# Archives
+*.rar
+*.zip
+*.7z

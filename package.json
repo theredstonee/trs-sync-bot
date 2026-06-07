@@ -1,0 +1,28 @@
+{
+  "name": "trs-sync-bot",
+  "version": "1.0.0",
+  "description": "Discord.js v14 bot to sync a category (structure + messages) between two servers",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "start": "ts-node --esm index.ts",
+    "dev": "ts-node --esm index.ts",
+    "deploy": "ts-node --esm src/deploy-commands.ts",
+    "build": "tsc",
+    "start:prod": "node dist/dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
