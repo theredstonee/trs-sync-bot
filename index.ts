@@ -18,6 +18,7 @@ import {
   onChannelDelete,
   onChannelUpdate,
 } from './src/events/channels.js';
+import { onGuildCreate } from './src/events/guilds.js';
 import { log } from './src/util/logger.js';
 
 const client = new Client({
@@ -34,6 +35,7 @@ client.once(Events.ClientReady, (c) => {
   void onReady(c);
 });
 client.on(Events.InteractionCreate, (i) => void onInteractionCreate(i));
+client.on(Events.GuildCreate, (g) => void onGuildCreate(g));
 
 client.on(Events.MessageCreate, (m) => void onMessageCreate(m));
 client.on(Events.MessageUpdate, (o, n) => void onMessageUpdate(o, n));
