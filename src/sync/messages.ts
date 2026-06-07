@@ -70,7 +70,10 @@ export async function mirrorMessageCreate(message: Message): Promise<void> {
     return;
   }
 
-  const username = sanitizeUsername(message.member?.displayName ?? message.author.username);
+  // Always use a display name (server nickname -> global display name), never the raw @username handle.
+  const username = sanitizeUsername(
+    message.member?.displayName ?? message.author.displayName ?? message.author.username,
+  );
   const avatarURL = message.author.displayAvatarURL({ extension: 'png', size: 256 });
 
   const client = new WebhookClient({ id: creds.id, token: creds.token });
