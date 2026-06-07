@@ -2,6 +2,8 @@ import {
   type Message,
   type PartialMessage,
   type OmitPartialGroupDMChannel,
+  type ReadonlyCollection,
+  type Snowflake,
 } from 'discord.js';
 import {
   isOwnMirror,
@@ -56,5 +58,18 @@ export async function onMessageDelete(message: AnyMessage): Promise<void> {
     await mirrorMessageDelete(message.id);
   } catch (err) {
     log.error('onMessageDelete error:', err);
+  }
+}
+
+/** Mirrors a bulk delete (moderation purge) by removing each mapped mirror message. */
+export async function onMessageDeleteBulk(
+  messages: ReadonlyCollection<Snowflake, AnyMessage>,
+): Promise<void> {
+  for (const id of messages.keys()) {
+    try {
+      await mirrorMessageDelete(id);
+    } catch (err) {
+      log.error('onMessageDeleteBulk error:', err);
+    }
   }
 }

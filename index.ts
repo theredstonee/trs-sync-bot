@@ -11,6 +11,7 @@ import { onInteractionCreate } from './src/events/interactionCreate.js';
 import {
   onMessageCreate,
   onMessageDelete,
+  onMessageDeleteBulk,
   onMessageUpdate,
 } from './src/events/messages.js';
 import {
@@ -42,6 +43,7 @@ client.on(Events.GuildCreate, (g) => void onGuildCreate(g));
 client.on(Events.MessageCreate, (m) => void onMessageCreate(m));
 client.on(Events.MessageUpdate, (o, n) => void onMessageUpdate(o, n));
 client.on(Events.MessageDelete, (m) => void onMessageDelete(m));
+client.on(Events.MessageBulkDelete, (msgs) => void onMessageDeleteBulk(msgs));
 
 client.on(Events.MessageReactionAdd, (r, u) => void onReactionAdd(r, u));
 client.on(Events.MessageReactionRemove, (r, u) => void onReactionRemove(r, u));
