@@ -1,143 +1,50 @@
 # TRS Sync Bot
 
-Ein modularer Discord-Bot (discord.js v14 + TypeScript + better-sqlite3), der eine
-**Kategorie inkl. aller Channels zwischen zwei Servern** synchronisiert.
+> Mirror an entire Discord category — channels, messages and reactions — between two servers. Free, open source, built in Germany. Part of the **TheRedStonee** universe.
 
-- **Struktur-Sync (A → B):** Channel-Erstellung, -Löschung, -Umbenennung, Reihenfolge,
-  Typ (Text/Voice/Forum/Announcement), Topic, Slowmode.
-- **Nachrichten-Sync (A ↔ B):** Bidirektional über Webhooks, mit Original-Name/Avatar,
-  Attachments, Embeds, Edits & Deletes. Inklusive Loop-Prevention.
-- **Custom Names:** Ein eigener Channel-Name auf B entsteht **nur** per
-  `/sync rename-channel` (dann gelockt). Ohne Eintrag folgt der Channel **immer** dem
-  Namen von Server A — eine UI-Umbenennung auf B wird automatisch wieder auf den
-  A-Namen (bzw. den gesetzten Custom-Namen) zurückgesetzt. Die Kategorie auf B ist
-  ebenso geschützt (nur per `/sync rename-category`).
+![License](https://img.shields.io/badge/License-MIT-e11d2a?style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6?style=flat-square)
+![discord.js](https://img.shields.io/badge/discord.js-v14-5865F2?style=flat-square)
+![Node](https://img.shields.io/badge/Node-22-339933?style=flat-square)
+[![Docs](https://img.shields.io/badge/Docs-redst.de-e11d2a?style=flat-square)](https://docs.redst.de/en/sync-bot/ueberblick)
 
-## Slash-Commands
+---
 
-| Command | Wo | Funktion |
-|---|---|---|
-| `/sync setup [category]` | Server A | Legt Sync an, gibt **Sync-ID** zurück |
-| `/sync activate [sync-id]` | Server B | Spiegelt Kategorie + Channels, startet Sync |
-| `/sync status` | beide | Zeigt verbundene Server/Kategorien |
-| `/sync rename-channel [channel] [new_name]` | Server B | Channel umbenennen + lock |
-| `/sync rename-category [new_name]` | Server B | Einzige erlaubte Kategorie-Umbenennung |
-| `/sync remove [sync-id?]` | beide | Trennt Sync, löscht DB-Einträge + Webhooks (Channels bleiben) |
+## What it does
 
-## Datenbank-Schema (better-sqlite3)
+Keeps a category in sync across two Discord servers. The **structure** flows from Server A → B, while **messages and reactions travel both ways** through webhooks — with the original display name and avatar, real pings, attachments and embeds.
 
-- `sync_pairs` – die Verbindung A↔B inkl. Kategorie-Infos und Aktiv-Status
-- `channel_mappings` – Source-Channel ↔ Target-Channel + beide Webhooks
-- `message_mappings` – Origin-Message ↔ Mirror-Message (für Edits/Deletes)
-- `custom_names` – gelockte Channel-Namen auf B
+## Features
 
-## Voraussetzungen
+- **Structure** — create, delete, rename and reorder channels (A → B); type, topic, slowmode and NSFW are carried over.
+- **Messages** — bidirectional via webhooks; edits, single deletes and bulk deletes (purge) are mirrored. Bots and third-party webhooks too.
+- **Reactions** — emojis mirrored 1:1 (add / remove).
+- **Names** — channels follow Server A unless locked with `/sync rename-channel`; the category is renamed only via `/sync rename-category`.
+- **Loop-safe** — the bot's own webhook messages are detected and never re-mirrored.
 
-- Node.js **22**
-- Der Bot muss **Mitglied beider Server** sein.
-- Bot-Permissions: `Manage Channels`, `Manage Webhooks`, `View Channels`,
-  `Send Messages`, `Read Message History`.
-- Im **Developer Portal** → Bot → **Privileged Gateway Intents**:
-  **MESSAGE CONTENT INTENT** aktivieren (Pflicht, sonst bleiben Nachrichten leer).
+## Commands
 
-## Lokales Setup
+| Command | Where | Function |
+| --- | --- | --- |
+| `/sync setup [category]` | Server A | Register a category, get a Sync ID |
+| `/sync activate [sync-id]` | Server B | Recreate channels, set up webhooks, start the sync |
+| `/sync status` | both | Show the syncs connected to this server |
+| `/sync rename-channel` | Server B | Rename and lock a mirrored channel |
+| `/sync rename-category` | Server B | Rename the mirrored category |
+| `/sync remove` | both | Disconnect and clear the database entries |
+
+## Setup
+
+Requires **Node 22**, the bot on **both servers**, and the **Message Content Intent** enabled.
 
 ```bash
-cp .env.example .env      # Token + Client-ID eintragen
+cp .env.example .env   # DISCORD_TOKEN + CLIENT_ID
 npm install
-npm run dev               # ts-node --esm src/index.ts
+npm run dev
 ```
 
-## Pterodactyl-Setup (Node.js 22, tsc-Build)
+Full setup, hosting (Pterodactyl) and troubleshooting → **[docs.redst.de](https://docs.redst.de/en/sync-bot/ueberblick)**
 
-Der Egg-Startup installiert Deps, **kompiliert mit `tsc -p`** und startet die
-fertige JS-Datei:
+## License
 
-```
-... npm install ; npx tsc -p /home/container ; node /home/container/dist/dist/index.js
-```
-
-Damit `node dist/dist/index.js` existiert, ist `outDir` in `tsconfig.json` auf
-**`dist/dist`** gesetzt (rootDir `src`). Das ist bereits konfiguriert.
-
-### ⚠️ WICHTIG: Node-Version & node_modules
-
-`better-sqlite3` ist ein **natives Modul** und braucht ein Binary, das zur Node-Version
-(ABI) passt.
-
-1. **Node-Version im Egg auf 20 oder 22 stellen.** Node **18 wird nicht unterstützt**
-   (`better-sqlite3@11` benötigt Node ≥ 20). Im Pterodactyl-Egg die Node-/Docker-Image-
-   Version entsprechend setzen.
-2. **Niemals `node_modules` hochladen.** Lade nur den Quellcode hoch (`node_modules` ist in
-   `.gitignore`). Liegt ein hochgeladenes/altes `node_modules` im Container, sagt
-   `npm install` nur „up to date" und lädt das passende SQLite-Binary **nie** nach →
-   `Could not locate the bindings file`. In dem Fall einmalig löschen:
-   ```bash
-   rm -rf /home/container/node_modules
-   ```
-   Beim nächsten Start zieht `npm install` `better-sqlite3` frisch inkl. Prebuild.
-
-### Ablauf
-
-1. Quellcode hochladen (oder per Git deployen) — **ohne** `node_modules`.
-2. **Environment-Variablen** im Panel setzen:
-   - `DISCORD_TOKEN`, `CLIENT_ID`, optional `DATABASE_PATH` (Standard: `./data/sync.db`)
-   - `JS_FILE` = `dist/index.js`  → der Egg startet `node /home/container/dist/${JS_FILE}`,
-     also `/home/container/dist/dist/index.js` (passt zu `outDir: dist/dist`)
-3. Starten — der Egg führt automatisch aus:
-   - `npm install` → installiert inkl. Prebuild von `better-sqlite3` (Linux/Node 20+)
-   - `npx tsc -p /home/container` → erzeugt `dist/dist/**/*.js`
-   - `node /home/container/dist/dist/index.js` → startet den Bot
-
-> Hinweis: `DATABASE_PATH` am besten auf einen persistenten Pfad legen (z. B.
-> `./data/sync.db`), damit die DB einen Neustart/Rebuild übersteht.
-
-## Ablauf (typische Nutzung)
-
-1. Auf **Server A**: `/sync setup category:<Kategorie>` → kopiere die Sync-ID.
-2. Auf **Server B**: `/sync activate sync-id:<ID>` → Kategorie + Channels werden erstellt.
-3. Fertig — Nachrichten syncen bidirektional, Struktur fließt A → B.
-
-## Architektur
-
-```
-src/
-  index.ts                 # Client + Intents + Event-Wiring
-  config.ts                # Env-Variablen
-  deploy-commands.ts       # (optional) globale Command-Registrierung
-  database/db.ts           # Schema + Repository-Funktionen
-  commands/
-    index.ts               # Command-Registry
-    sync.ts                # /sync mit allen Subcommands
-  events/
-    ready.ts               # Command-Registrierung + State laden
-    interactionCreate.ts   # Command-Dispatch
-    messages.ts            # messageCreate/Update/Delete
-    channels.ts            # channelCreate/Update/Delete
-  sync/
-    state.ts               # Loop-Prevention + Suppress-Set für eigene Updates
-    ids.ts                 # Sync-ID-Generator
-    channels.ts            # Channel-Helper, Webhook-Erstellung
-    messages.ts            # Nachrichten spiegeln (send/edit/delete)
-    structure.ts           # Struktur-Sync + Custom-Name-Logik + Positionen
-    setup.ts               # Aktivierung (Kategorie + Channels nachbauen)
-  util/logger.ts
-```
-
-## Hinweise / Grenzen
-
-- **Loop-Prevention:** Eingehende Nachrichten von eigenen, gemanagten Webhooks werden
-  per ID ignoriert. Bots & fremde Webhooks werden gespiegelt.
-- **Eigene Channel-Updates** (durch den Bot) werden per In-Memory-`Set` markiert, damit
-  sie nicht fälschlich als Custom Name in die DB geschrieben werden.
-- **Nachrichten-Sync** läuft für **Text- und Announcement-Channels**. Voice/Forum werden
-  strukturell gespiegelt, aber (Forum-Threads/Voice) nicht als Nachrichten-Stream.
-- **Reaktionen** werden 1:1 mitgespiegelt (Add/Remove). Technische Eigenheit: Discord erlaubt
-  keine Reaktion „im Namen" eines fremden Users — die gespiegelte Reaktion wird vom **Bot**
-  gesetzt. Sie erscheint also korrekt mit Emoji am Partner-Post, aber als Bot-Reaktion.
-  Eine gespiegelte Reaktion wird erst entfernt, wenn auf der Quellseite **kein** User mehr
-  diese Reaktion hält. Custom-Emojis fremder Server (in denen der Bot nicht ist) können nicht
-  gesetzt werden und werden übersprungen.
-- Erwähnungen werden 1:1 gespiegelt und lösen **echte Pings** aus — inkl. @User, Rollen
-  und @everyone/@here (`allowedMentions: parse: ['users','roles','everyone']`).
-```
+MIT © TheRedStonee
